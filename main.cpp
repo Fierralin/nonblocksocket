@@ -8,13 +8,29 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/shm.h>
+#include <pthread.h>
 
 #define SERV_IP "127.0.0.1"
 #define SERV_PORT 6339
 #define LEN_QUEUE 20
 #define BUFFER_SIZE 1024
 
+#define MAXCORES 16
+
+struct ThreadRec {
+  int socket_in; // 1, in; 0, none; 2, out
+  pthread_t pid;
+
+} ;
+
+void init_ThreadRec();
+
+void runthread(void *arg);
+
 int main(int argc, char *argv[]) {
+  int num_cores, corecount;
+  struct ThreadRec pthpool[MAXCORES]; // threads
+
   int server_sockfd;
   int flag;
   struct sockaddr_in server_sockaddr; // server's address information
@@ -39,6 +55,24 @@ int main(int argc, char *argv[]) {
   flag = fcntl(server_sockfd, F_SETFL, 0);
   fcntl(server_sockfd, F_GETFL, flag | O_NONBLOCK); // set to non-blocking mode
 
+  num_cores = 0;
+  corecount = 0;
+  if (num_cores < MAXCORES) {
+    pthread_create(&pthpool[num_cores].pid, NULL, func, (void *)pthpool[num_cores]);
 
+    num_cores++;
+  }
+  else {
 
+  }
+
+}
+
+void runthread(void *arg) {
+  struct ThreadRec *rec = (struct ThreadRec *)arg; //
+  int client_sockfd;
+  struct sockaddr client_sockaddr;
+  while (1) {
+
+  }
 }

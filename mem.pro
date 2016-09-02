@@ -4,7 +4,15 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \ 
-    main.cpp
+    main.cpp \
+    main1.cpp \
+    serv.cpp \
+    blankserver.c \
+    fcntlserver.c \
+    kkk.c \
+    lililili.c \
+    lll.c \
+    epoll_multiprocess.c
 
 HEADERS += \
     libmemcached/memcached.h \
