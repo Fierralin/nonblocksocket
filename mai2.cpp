@@ -29,15 +29,12 @@ struct ThreadRec {
 
 void *runthread(void *arg);
 
+int server_sockfd;
+
 int main(int argc, char *argv[]) {
   struct ThreadRec pthpool[MAXCORES]; // threads
-  struct epoll_event ev, events[MAX_CONNECTS]; // max connects
-  int efd;
-
-  int server_sockfd;
-  int client_sockfd;
   int flag;
-  socklen_t len_sockaddr;
+
   struct sockaddr_in server_sockaddr; // server's address information
   struct sockaddr client_sockaddr;
 
@@ -46,7 +43,6 @@ int main(int argc, char *argv[]) {
   server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
   bzero(&(server_sockaddr.sin_zero), 8);
 
-  len_sockaddr = sizeof(struct sockaddr);
 
   server_sockfd  = socket(AF_INET, SOCK_STREAM, 0);
   bind(server_sockfd, (struct sockaddr *)&server_sockaddr, sizeof(struct sockaddr));
@@ -55,23 +51,38 @@ int main(int argc, char *argv[]) {
   flag = fcntl(server_sockfd, F_SETFL, 0);
   fcntl(server_sockfd, F_GETFL, flag | O_NONBLOCK); // set to non-blocking mode
 
+  printf("--------before create threads\n"); /////////////////////
+  for (int tmpi = 0; tmpi < MAXCORES; tmpi++) {
+    pthpool[tmpi].tid = tmpi; pthpool[tmpi].socket_on = 0; // init
+    printf("after init %d\n", tmpi); ///////////////////////
+    pthread_create(&pthpool[tmpi].pid, NULL, runthread, (void *)&pthpool[tmpi]);
+  }
+}
+
+void *runthread(void *arg) {
+  struct ThreadRec *rec = (struct ThreadRec *)arg; //
+  struct sockaddr client_sockaddr;
+  socklen_t len_sockaddr = sizeof(struct sockaddr);;
+  int client_sockfd;
+  int ret = 999;
+  char recv_buff[1024];
+  int flag;
+
+  struct epoll_event ev, events[MAX_CONNECTS]; // max connects
+  int efd;
   efd = epoll_create(MAX_CONNECTS);
   ev.events = EPOLLIN | EPOLLET;
   ev.data.fd = server_sockfd;
   epoll_ctl(efd, EPOLL_CTL_ADD, server_sockfd, &ev);
+  printf("--------before create threads\n"); /////////////////////
 
-  for (int tmpi = 0; tmpi < MAXCORES; tmpi++) {
-    pthpool[tmpi].tid = tmpi; pthpool[tmpi].socket_on = 0; // init
-    pthread_create(&pthpool[tmpi].pid, NULL, runthread, (void *)&pthpool[tmpi]);
-  }
+  rec->socket_on = 0;
 
-  while (1) { //
+  while (1) {
+
     int num_events = epoll_wait(efd, events, MAX_CONNECTS, -1);
 
     for (int tmpi = 0; tmpi < num_events; tmpi++) { // handle every events
-
-      printf("------------for handle every events. \n"); //////////////////
-
       if (events[tmpi].data.fd == server_sockfd) { // new connection in
         client_sockfd = accept(server_sockfd, &client_sockaddr, &len_sockaddr);
         if (client_sockfd > 0) {
@@ -84,54 +95,32 @@ int main(int argc, char *argv[]) {
         }
 
       }
-      else { //
+      else if (events[tmpi].events & EPOLLIN){ //
 
         if (events[tmpi].data.fd < 0) continue;
         printf("##------------find a thread to handle. \n"); //////////////////
 
-        while (1) { // wait for an empty thread
-          int tmpj;
-          for (tmpj = 0; tmpj < MAXCORES; tmpj++) {
-            if (pthpool[tmpj].socket_on == 0) {
-              pthpool[tmpj].clientfd = events[tmpi].data.fd;
-              pthpool[tmpj].socket_on = 1;
-              break;
-            }
-          }
-          if (tmpj < MAXCORES) break;
+        memset(recv_buff, 0, sizeof(recv_buff));
+        int num_recv = 0;
+        while ((ret = read(events[tmpi].data.fd, recv_buff + num_recv, 1024)) > 0) num_recv += ret;
+
+        if (ret == -1 && errno != EAGAIN) {
+          printf("error recv data\n");
+          close(events[tmpi].data.fd);
+          events[tmpi].data.fd = -1;
         }
 
-      } // end else
-    } // end for-loop handling every events
-  } // end while (1)
-
-}
-
-void *runthread(void *arg) {
-  struct ThreadRec *rec = (struct ThreadRec *)arg; //
-  int ret = 999;
-  char recv_buff[1024];
-
-  rec->socket_on = 0;
-
-  while (1) {
-
-    while (rec->socket_on == 1) {
-
-      ret = recv(rec->clientfd, recv_buff, 1024, 0);
-
-      if (ret < 0) {
-        if (errno == EAGAIN) fprintf(stderr, "EAGAIN\n");
-        else fprintf(stderr, "recv error\n");
-        close(rec->clientfd);
-        rec->socket_on = 0;
-      }
-      else if (ret == 0) { // close properly
-        close(rec->clientfd);
-        rec->socket_on = 0;
+        if (ret == 0) {
+          printf("ret == 0?\n");
+          close(events[tmpi].data.fd);
+          continue;
+        }
         printf("[%d]recv: %s\n", rec->tid, recv_buff);
-      }
-    } // end if (ret < 0) - else
+
+
+
+      } // end else
+    }
 
   } // end while (1)
 }
