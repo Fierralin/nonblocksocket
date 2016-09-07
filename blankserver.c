@@ -9,12 +9,11 @@
 #include <fcntl.h>
 #include <sys/shm.h>
 
-#define MYPORT  8887
+#define MYPORT  6339
 #define QUEUE   20
 #define BUFFER_SIZE 1024
 
-int main()
-{
+int main() {
 	///定义sockfd
 	int server_sockfd = socket(AF_INET,SOCK_STREAM, 0);
 
@@ -45,14 +44,12 @@ int main()
 
 	///成功返回非负描述字，出错返回-1
 	int conn = accept(server_sockfd, (struct sockaddr*)&client_addr, &length);
-	if(conn<0)
-	{
+    if(conn<0) {
 		perror("connect");
 		exit(1);
 	}
 
-	while(1)
-	{
+    while(1) {
 		memset(buffer,0,sizeof(buffer));
 		int len = recv(conn, buffer, sizeof(buffer),0);
 		if(strcmp(buffer,"exit\n")==0)

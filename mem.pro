@@ -13,7 +13,9 @@ SOURCES += \
     lililili.c \
     lll.c \
     epoll_multiprocess.c \
-    mai2.cpp
+    mai2.cpp \
+    pureserver.c \
+    pureclient.c
 
 HEADERS += \
     libmemcached/memcached.h \
