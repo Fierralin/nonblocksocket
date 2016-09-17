@@ -22,7 +22,8 @@ SOURCES += \
     pure_client_1.c \
     pure_client.c \
     pure_server.c \
-    Untitled1.c
+    Untitled1.c \
+    tmp_levent.cpp
 
 HEADERS += \
     libmemcached/memcached.h \

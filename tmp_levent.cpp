@@ -22,6 +22,14 @@ int main() {
 
 }
 
+static void read_buffer(int client_socket_fd, short event_type, void *arg) {
+    if (arg == NULL) return;
+
+    if (event_type == EV_TIMEOUT) {
+        fprintf(stderr, "--- event_type == EV_TIMEOUT\n");
+    }
+}
+
 
 int set_nonblocking(int sockfd) {
     if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, 0)|O_NONBLOCK) == -1)
