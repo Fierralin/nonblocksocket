@@ -6,13 +6,9 @@ CONFIG -= qt
 SOURCES += \ 
     main.cpp \
     main1.cpp \
-    serv.cpp \
     blankserver.c \
     fcntlserver.c \
     kkk.c \
-    lililili.c \
-    lll.c \
-    epoll_multiprocess.c \
     mai2.cpp \
     pureserver.c \
     pureclient.c \
@@ -22,8 +18,9 @@ SOURCES += \
     pure_client_1.c \
     pure_client.c \
     pure_server.c \
-    Untitled1.c \
-    tmp_levent.cpp
+    tmp_levent.cpp \
+    lev_socket.c \
+    tmpmem.cpp
 
 HEADERS += \
     libmemcached/memcached.h \
